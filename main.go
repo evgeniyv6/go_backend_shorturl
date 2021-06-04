@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 	"github.com/gomodule/redigo/redis"
+	"go_backend_shorturl/configuration"
 	"log"
 	"math"
 )
+
+var FS configuration.OsFileSystem
 
 func main() {
 	fmt.Println("hello from custom bitly")
@@ -29,4 +32,6 @@ func main() {
 		log.Printf("Cmd DO err: %s", err)
 	}
 	log.Println(rep)
+
+	log.Fatal(configuration.ReadConfig("config.json", FS))
 }
