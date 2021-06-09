@@ -10,71 +10,54 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
 components:
   parameters:
-      GoShortLink:
-        description: A short link made of the domain and hash
-        example: example.com/Wchd8b6c
-        in: path
-        name: goshortlink
-        required: true
-        schema:
-          type: string
-      GoShortLinkStat:
-        description: The query parameter used to get stat for a short link
-        in: query
-        name: link_id
-        required: true
-        schema:
-          type: string
-      CustomGoShortLink:
-        description: A custom link made of the domain and keyword
-        example: mylink.com/mypath
-        in: path
-        name: custom_link
-        required: true
-        schema:
-          type: string
+    Hash:
+      description: A short link made of the domain and hash
+      example: http://example.com/Wchd8b6c
+      in: path
+      name: hash
+      required: true
+      schema:
+        type: string
+    GoShortLinkStat:
+      description: The query parameter used to get stat for a short link
+      example: http://example.com/Wchd8b6c/info
+      in: query
+      name: link_id
+      required: true
+      schema:
+        type: string
+    RedirectGoShortLink:
+      description: Redirect to the original link
+      example: http://mylink.com/mypath
+      in: path
+      name: redirect_link
+      required: true
+      schema:
+        type: string
   schemas:
     GoShortLinkUpdate:
       type: object
       properties:
-        created_at:
+        success:
+          type: boolean
+        data:
           type: string
-        custom_links:
-          items:
-            type: string
-          type: array
-        id:
-          type: string
-        link:
-          type: string
-        long_url:
-          type: string
-    GoShortLinks:
+    Hash:
       type: object
       properties:
         links:
           items: {$ref: '#/components/schemas/GoShortLinkBody'}
           type: array
-    AddCustomLink:
-      type: object
-      example:
-        link_id: example.com/Wchd8b6c
-        custom_link: example.com/custom_string
-      properties:
-        link_id:
-          type: string
-        custom_link:
-          type: string
     ShortLinkOverrides:
       type: object
       properties:
-          created:
-            type: string
-          id:
-            type: string
-          link:
-            description: 'The full URL to the Override which is thelink to use. Ex: https://foo.com/bar'
-            type: string
+        created:
+          type: string
+        id:
+          type: string
+        link:
+          description: 'The full URL to the Override which is thelink to use. Ex: https://foo.com/bar'
+          type: string
     HasReferences:
       properties:
         references:
@@ -85,41 +68,33 @@ components:
     FullURL:
       type: object
       properties:
-        domain:
+        url:
           type: string
-        long_url:
-          type: string
-        title:
-          type: string
-      required: [long_url]
+      required: [url]
     GoShortLinkBody:
       allOf:
-      - {$ref: '#/components/schemas/GoShortLinkUpdate'}
+        - {$ref: '#/components/schemas/GoShortLinkUpdate'}
       type: object
     Stat:
       type: object
       properties:
-        link_clicks:
+        success:
+          type: boolean
+        data:
           items:
             $ref: '#/components/schemas/LinkClicks'
-          type: array
     LinkClicks:
       type: object
       properties:
-        clicks:
+        id:
           type: integer
-        date:
-          type: string
-    CustomGoShortLink:
-      type: object
-      properties:
-        bitlink:
-          $ref: '#/components/schemas/GoShortLinkBody'
-        custom_link:
+        stat:
+          type: integer
+        link:
           type: string
     BadRequest:
       allOf:
-      - {$ref: '#/components/schemas/Error'}
+        - {$ref: '#/components/schemas/Error'}
       description: BAD_REQUEST
     Error:
       type: object
@@ -141,14 +116,14 @@ components:
           type: string
     NotFound:
       allOf:
-      - {$ref: '#/components/schemas/Error'}
+        - {$ref: '#/components/schemas/Error'}
       description: NOT_FOUND
     InternalError:
       allOf:
-      - {$ref: '#/components/schemas/Error'}
+        - {$ref: '#/components/schemas/Error'}
       description: INTERNAL_ERROR
 paths:
-  /goshortlinks:
+  /cut:
     post:
       description: Converts a long url to a short link
       operationId: createFullGoShortLink
@@ -184,12 +159,12 @@ paths:
                 $ref: '#/components/schemas/InternalError'
           description: INTERNAL_ERROR
       summary: Create a short link
-  /goshortlinks/{goshortlink}:
+  /hash:
     get:
       description: Returns information for the specified link.
       operationId: getGoShortLink
       parameters:
-      - {$ref: '#/components/parameters/GoShortLink'}
+        - {$ref: '#/components/parameters/Hash'}
       responses:
         '200':
           content:
@@ -208,12 +183,12 @@ paths:
               schema: {$ref: '#/components/schemas/InternalError'}
           description: INTERNAL_ERROR
       summary: Retrieve a short link
-  /goshortlinks/{goshortlink}/stat:
+  /hash/info:
     get:
       description: Returns the stat for the specified link
       operationId: getStatsForGoShortLink
       parameters:
-      - {$ref: '#/components/parameters/GoShortLink'}
+        - {$ref: '#/components/parameters/GoShortLinkStat'}
       responses:
         '200':
           content:
@@ -230,37 +205,4 @@ paths:
             application/json:
               schema: {$ref: '#/components/schemas/InternalError'}
           description: INTERNAL_ERROR
-      summary: Get stattistics about link
-  /custom_goshortlinks:
-    post:
-      description: Add a keyword to a link with a Custom
-      operationId: addCustomGoShortlink
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AddCustomLink'
-        required: true
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CustomGoShortLink'
-          description: SUCCESS
-        '400':
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/BadRequest'}
-          description: BAD_REQUEST
-        '404':
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/NotFound'}
-          description: NOT_FOUND
-        '500':
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/InternalError'}
-          description: INTERNAL_ERROR
-      summary: Add Custom Bitlink
+      summary: Get statistics about link

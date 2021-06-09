@@ -4,15 +4,19 @@ import (
 	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"go_backend_shorturl/configuration"
+	"go_backend_shorturl/hasher"
 	"log"
 	"math"
 )
 
-var FS configuration.OsFileSystem
+var FSO configuration.OsFileSystem
 
 func main() {
-	fmt.Println("hello from custom bitly")
+	fmt.Println("hello from custom bitly. Clear this file when complete.")
 	fmt.Println(uint64(math.MaxUint64))
+
+	log.Println(string(hasher.GenHash(uint64(math.MaxUint64))))
+	log.Println(hasher.GenClear("pIrkgbKrQ8v"))
 
 	// try redis
 	conn, err := redis.Dial("tcp", "127.0.0.1:6379")
@@ -33,5 +37,7 @@ func main() {
 	}
 	log.Println(rep)
 
-	log.Fatal(configuration.ReadConfig("config.json", FS))
+	c, err := configuration.ReadConfig("config.json", FSO)
+	log.Println(c)
+
 }

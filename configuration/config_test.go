@@ -24,7 +24,7 @@ var (
 			Address: "127.0.0.1",
 			Port:    "8080",
 		},
-		RedisDB: Redis{
+		RedisDB: RedisDB{
 			Address: "127.0.0.1",
 			Port:    "6379",
 		},
@@ -71,7 +71,6 @@ func TestReadConfig(t *testing.T) {
 	errPrinter(err)
 	readConfig, err := ReadConfig(testAfsFile, fsTest)
 	errPrinter(err)
-
 	if !reflect.DeepEqual(config, *readConfig) {
 		t.Errorf("JSON files are not equal. Have: %v, want: %v", *readConfig, config)
 	}

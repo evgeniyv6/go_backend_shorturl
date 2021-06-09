@@ -4,19 +4,22 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"time"
 )
 
 type Config struct {
-	Server  Server `json:"server"`
-	RedisDB Redis  `json:"redisdb"`
+	Server  Server            `json:"server"`
+	RedisDB RedisDB           `json:"redisdb"`
+	Timeout time.Duration     `json:"shu_timeout"`
 }
 
 type Server struct {
 	Address string `json:"address"`
 	Port    string `json:"port"`
+	Protocol    string `json:"protocol"`
 }
 
-type Redis struct {
+type RedisDB struct {
 	Address string `json:"address"`
 	Port    string `json:"port"`
 }

@@ -1,0 +1,12 @@
+{
+  "server": {
+    "address": "127.0.0.1",
+    "port": "6089",
+    "protocol": "http"
+  },
+  "redisdb": {
+    "address": "127.0.0.1",
+    "port": "6379"
+  },
+  "shu_timeout": 5
+}
