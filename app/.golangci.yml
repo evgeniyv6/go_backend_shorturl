@@ -12,7 +12,7 @@ run:
   skip-dirs-use-default: true
   # Пропускать файлы, заканчивающиеся на .bad.go
   skip-files:
-    - ".*\\.bad\\.go$"
+    - ".*\\.bad"
 linters:
   disable-all: true
   enable:
