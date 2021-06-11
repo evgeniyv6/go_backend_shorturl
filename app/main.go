@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/gomodule/redigo/redis"
-	"go_backend_shorturl/configuration"
-	"go_backend_shorturl/hasher"
 	"log"
 	"math"
+
+	"github.com/evgeniyv6/go_backend_shorturl/app/internal/configuration"
+	"github.com/evgeniyv6/go_backend_shorturl/app/internal/hasher"
+
+	"github.com/gomodule/redigo/redis"
 )
 
 var FSO configuration.OsFileSystem

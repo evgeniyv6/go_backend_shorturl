@@ -2,11 +2,12 @@ package configuration
 
 import (
 	"encoding/json"
-	"github.com/spf13/afero"
 	"log"
 	"os"
 	"reflect"
 	"testing"
+
+	"github.com/spf13/afero"
 )
 
 const (
@@ -67,6 +68,7 @@ func TestReadConfig(t *testing.T) {
 	b, err := afsMem.ReadFile(testAfsFile)
 	errPrinter(err)
 	var config Config
+
 	err = json.Unmarshal(b, &config)
 	errPrinter(err)
 	readConfig, err := ReadConfig(testAfsFile, fsTest)
@@ -74,5 +76,4 @@ func TestReadConfig(t *testing.T) {
 	if !reflect.DeepEqual(config, *readConfig) {
 		t.Errorf("JSON files are not equal. Have: %v, want: %v", *readConfig, config)
 	}
-
 }

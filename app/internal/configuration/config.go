@@ -8,15 +8,15 @@ import (
 )
 
 type Config struct {
-	Server  Server            `json:"server"`
-	RedisDB RedisDB           `json:"redisdb"`
-	Timeout time.Duration     `json:"shu_timeout"`
+	Server  Server        `json:"server"`
+	RedisDB RedisDB       `json:"redisdb"`
+	Timeout time.Duration `json:"shu_timeout"`
 }
 
 type Server struct {
-	Address string `json:"address"`
-	Port    string `json:"port"`
-	Protocol    string `json:"protocol"`
+	Address  string `json:"address"`
+	Port     string `json:"port"`
+	Protocol string `json:"protocol"`
 }
 
 type RedisDB struct {

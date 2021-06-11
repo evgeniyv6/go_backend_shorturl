@@ -1,5 +1,5 @@
 build:
-	cd ./cmd/shortener && go build -o shortener shortener.go
+	cd ./app/cmd/shortener && go build -o shortener shortener.go
 
 fmt:
 	gofmt -w -s .
@@ -12,4 +12,4 @@ check:
 	golangci-lint run ./...
 
 run:
-	cd ./cmd/shortener && go run -race shortener.go
+	cd ./app/cmd/shortener && go run -race shortener.go

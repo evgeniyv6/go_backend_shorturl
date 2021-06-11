@@ -2,11 +2,13 @@ package handler
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
-	"go_backend_shorturl/redisdb"
 	"net/http"
 	"net/url"
+
+	"github.com/evgeniyv6/go_backend_shorturl/app/internal/redisdb"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type (
@@ -22,7 +24,8 @@ type (
 )
 
 func NewGinRouter(netProtocol, address string, db redisdb.DBAction) *gin.Engine {
-	r := gin.Default()
+	gin.SetMode(gin.ReleaseMode) // for production
+	r := gin.New()
 	h := handler{netProtocol, address, db}
 	r.POST("/cut", respHandler(h.cut))
 	r.GET("/:hash/info", respHandler(h.expand))
@@ -48,9 +51,9 @@ func (h *handler) cut(ctx *gin.Context) (interface{}, int, error) {
 	}
 	err := ctx.ShouldBindJSON(&body)
 	if err != nil {
-		zap.S().Errorf("Couldnot get body from request, error: %s", err)
+		zap.S().Errorw("Couldnot get body from request.", "err", err)
 	}
-	zap.S().Infof("link for processing: %s",body.URL)
+	zap.S().Infow("Link for processing.", "link", body.URL)
 
 	uri, err := url.ParseRequestURI(body.URL)
 	if err != nil {
@@ -75,7 +78,7 @@ func (h *handler) cut(ctx *gin.Context) (interface{}, int, error) {
 
 func (h *handler) expand(ctx *gin.Context) (interface{}, int, error) {
 	hash := ctx.Param("hash")
-	zap.S().Infof("hash info: %s", hash)
+	zap.S().Infof("Hash info: %s", hash)
 
 	res, err := h.db.GetInfo(hash)
 	if err != nil {

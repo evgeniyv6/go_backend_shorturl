@@ -1,13 +1,15 @@
 package redisdb
 
 import (
-	"github.com/gomodule/redigo/redis"
-	"go.uber.org/zap"
-	"go_backend_shorturl/hasher"
 	"math/rand"
 	"net"
 	"strconv"
 	"time"
+
+	"github.com/evgeniyv6/go_backend_shorturl/app/internal/hasher"
+
+	"github.com/gomodule/redigo/redis"
+	"go.uber.org/zap"
 )
 
 type (
@@ -44,11 +46,11 @@ func (r *redisConn) used(num uint64) bool {
 	defer func() {
 		err := conn.Close()
 		if err != nil {
-			zap.S().Errorf("Couldnot close redis connection: %s",err)
+			zap.S().Errorw("Couldnot close redis connection.", "err", err)
 		}
 	}()
 
-	exists, err := redis.Bool(conn.Do("EXISTS", "go:shorted:" + strconv.FormatUint(num, 10)))
+	exists, err := redis.Bool(conn.Do("EXISTS", "go:shorted:"+strconv.FormatUint(num, 10)))
 	if err != nil {
 		return false
 	}
@@ -60,7 +62,7 @@ func (r *redisConn) Save(link string) (string, error) {
 	defer func() {
 		err := conn.Close()
 		if err != nil {
-			zap.S().Errorf("Couldnot close redis connection: %s",err)
+			zap.S().Errorw("Couldnot close redis connection.", "err", err)
 		}
 	}()
 
@@ -86,7 +88,7 @@ func (r *redisConn) GetLink(hash string) (string, error) {
 	defer func() {
 		err := conn.Close()
 		if err != nil {
-			zap.S().Errorf("Couldnot close redis connection: %s",err)
+			zap.S().Errorw("Couldnot close redis connection.", "err", err)
 		}
 	}()
 
@@ -95,14 +97,14 @@ func (r *redisConn) GetLink(hash string) (string, error) {
 		return "", err
 	}
 
-	dbRecLink, err := redis.String(conn.Do("HGET", "go:shorted:" + strconv.FormatUint(clearedRandNum, 10), "Link"))
+	dbRecLink, err := redis.String(conn.Do("HGET", "go:shorted:"+strconv.FormatUint(clearedRandNum, 10), "Link"))
 	if err != nil {
 		return "", err
 	} else if len(dbRecLink) == 0 {
 		return "", err
 	}
 
-	_, err = conn.Do("HINCRBY", "go:shorted:" + strconv.FormatUint(clearedRandNum, 10), "Stat", 1)
+	_, err = conn.Do("HINCRBY", "go:shorted:"+strconv.FormatUint(clearedRandNum, 10), "Stat", 1)
 	if err != nil {
 		return "", err
 	}
@@ -115,7 +117,7 @@ func (r *redisConn) GetInfo(hash string) (*DBRecord, error) {
 	defer func() {
 		err := conn.Close()
 		if err != nil {
-			zap.S().Errorf("Couldnot close redis connection: %s",err)
+			zap.S().Errorw("Couldnot close redis connection.", "err", err)
 		}
 	}()
 
