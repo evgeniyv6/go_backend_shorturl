@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -35,13 +36,12 @@ func NewGinRouter(netProtocol, address string, db redisdb.DBAction) *gin.Engine 
 
 func respHandler(h func(ctx *gin.Context) (interface{}, int, error)) gin.HandlerFunc {
 	return func(context *gin.Context) {
-		res, errCode, err := h(context)
+		res, code, err := h(context)
 		if err != nil {
 			res = err.Error()
 		}
-		context.Status(errCode)
 		zap.S().Info(res)
-		context.JSON(http.StatusOK, resp{Data: res, Success: err == nil})
+		context.JSON(code, resp{Data: res, Success: err == nil})
 	}
 }
 
@@ -57,12 +57,12 @@ func (h *handler) cut(ctx *gin.Context) (interface{}, int, error) {
 
 	uri, err := url.ParseRequestURI(body.URL)
 	if err != nil {
-		return "", http.StatusBadRequest, err
+		return nil, http.StatusBadRequest, err
 	}
 
 	hashString, err := h.db.Save(uri.String())
 	if err != nil {
-		return "", http.StatusInternalServerError, fmt.Errorf("Couldnot save to database: %v", err)
+		return nil, http.StatusInternalServerError, fmt.Errorf("Couldnot save to database: %v", err)
 	}
 
 	newUrl := url.URL{
@@ -81,8 +81,9 @@ func (h *handler) expand(ctx *gin.Context) (interface{}, int, error) {
 	zap.S().Infof("Hash info: %s", hash)
 
 	res, err := h.db.GetInfo(hash)
+	log.Printf("----...>>> %v", err)
 	if err != nil {
-		return "", http.StatusNotFound, fmt.Errorf("URL not found")
+		return nil, http.StatusNotFound, fmt.Errorf("URL not found")
 	}
 
 	return res, http.StatusOK, nil

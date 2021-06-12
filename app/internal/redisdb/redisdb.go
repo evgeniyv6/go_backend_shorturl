@@ -25,7 +25,14 @@ type (
 		GetLink(string) (string, error)
 		GetInfo(string) (*DBRecord, error)
 	}
+	errorString struct {
+		s string
+	}
 )
+
+func (e *errorString) Error() string {
+	return e.s + "\n"
+}
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -101,7 +108,7 @@ func (r *redisConn) GetLink(hash string) (string, error) {
 	if err != nil {
 		return "", err
 	} else if len(dbRecLink) == 0 {
-		return "", err
+		return "", &errorString{"Short link not found in DB."}
 	}
 
 	_, err = conn.Do("HINCRBY", "go:shorted:"+strconv.FormatUint(clearedRandNum, 10), "Stat", 1)
@@ -130,7 +137,7 @@ func (r *redisConn) GetInfo(hash string) (*DBRecord, error) {
 	if err != nil {
 		return nil, err
 	} else if len(val) == 0 {
-		return nil, err
+		return nil, &errorString{"Short link not found in DB."}
 	}
 	err = redis.ScanStruct(val, &shortLink)
 	if err != nil {

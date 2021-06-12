@@ -21,8 +21,8 @@ components:
     GoShortLinkStat:
       description: The query parameter used to get stat for a short link
       example: http://example.com/Wchd8b6c/info
-      in: query
-      name: link_id
+      in: path
+      name: hash
       required: true
       schema:
         type: string
@@ -159,7 +159,7 @@ paths:
                 $ref: '#/components/schemas/InternalError'
           description: INTERNAL_ERROR
       summary: Create a short link
-  /hash:
+  /{hash}:
     get:
       description: Returns information for the specified link.
       operationId: getGoShortLink
@@ -183,7 +183,7 @@ paths:
               schema: {$ref: '#/components/schemas/InternalError'}
           description: INTERNAL_ERROR
       summary: Retrieve a short link
-  /hash/info:
+  /{hash}/info:
     get:
       description: Returns the stat for the specified link
       operationId: getStatsForGoShortLink
