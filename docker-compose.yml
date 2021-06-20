@@ -1,0 +1,59 @@
+version: '3.6'
+services:
+  goapp:
+    # image: goapp:1.0
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    restart: always
+    hostname: goapphost
+    container_name: goapphost
+    depends_on:
+      - redisdb
+    ports:
+      - 8079:8079
+    #working_dir: /
+    command: /shortener
+    networks:
+      myweb:
+        ipv4_address: 172.16.238.2
+      default:
+  redisdb:
+    image: redis:alpine
+    restart: always
+    hostname: redisdbhost
+    container_name: redisdbhost
+    volumes:
+      - /opt/yevgen/docker_share/redis2/etc/redis.conf:/usr/local/etc/redis/redis.conf
+      - /opt/yevgen/docker_share/redis2/data:/data
+    ports:
+      - 6378:6379
+    # command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    networks:
+      myweb:
+        ipv4_address: 172.16.238.3
+      default:
+  reactapp:
+    image: centos:latest
+    restart: always
+    hostname: reactapphost
+    container_name: reactapphost
+    depends_on:
+      - goapp
+    ports:
+      - 8080:8080
+    networks:
+      myweb:
+        ipv4_address: 172.16.238.4
+      default:
+
+networks:
+  myweb:
+    driver: bridge
+    internal: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+  default:
+    driver: bridge
