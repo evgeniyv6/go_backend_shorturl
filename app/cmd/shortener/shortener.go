@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -37,7 +38,7 @@ func main() {
 	}
 
 	srvAddress := net.JoinHostPort(config.Server.Address, config.Server.Port)
-	act, err := redisdb.NewPool(config.RedisDB.Address, config.RedisDB.Port)
+	act, err := redisdb.NewPool(os.Getenv("REDIS_ENDPOINT_URI"), os.Getenv("REDIS_ENDPOINT_PORT")) //(config.RedisDB.Address, config.RedisDB.Port)
 	if err != nil {
 		zap.S().Panicw("Couldnot get redis connection error.", "err", err)
 	}
