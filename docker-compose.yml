@@ -38,8 +38,10 @@ services:
     restart: always
     hostname: reactapphost
     container_name: reactapphost
-    depends_on:
-      - goapp
+    volumes:
+      - /opt/yevgen/docker_share/centos/thapp:/data
+#    depends_on:
+#      - goapp
     ports:
       - 8080:8080
     networks:
