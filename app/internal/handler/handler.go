@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/gin-contrib/cors"
-
 	"github.com/evgeniyv6/go_backend_shorturl/app/internal/redisdb"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +27,7 @@ type (
 func NewGinRouter(netProtocol, address string, db redisdb.DBAction) *gin.Engine {
 	gin.SetMode(gin.ReleaseMode) // for production
 	r := gin.New()
-	r.Use(cors.Default())
+	//r.Use(cors.Default())
 	h := handler{netProtocol, address, db}
 	r.POST("/cut", respHandler(h.cut))
 	r.GET("/:hash/info", respHandler(h.expand))

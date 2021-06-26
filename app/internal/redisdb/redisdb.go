@@ -43,7 +43,9 @@ func NewPool(addr, port string) (DBAction, error) {
 		MaxIdle:     3,
 		IdleTimeout: 240 * time.Second,
 		// Dial or DialContext must be set. When both are set, DialContext takes precedence over Dial.
-		Dial: func() (redis.Conn, error) { return redis.Dial("tcp", net.JoinHostPort(addr, port)) },
+		Dial: func() (redis.Conn, error) {
+			return redis.Dial("tcp", net.JoinHostPort(addr, port)) //, redis.DialPassword("FMMfwTTC5Jd1TfpkykIUQodOURSAat5C"))
+		},
 	}
 	return &redisConn{p}, nil
 }

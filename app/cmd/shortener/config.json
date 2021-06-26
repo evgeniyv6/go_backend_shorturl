@@ -6,7 +6,9 @@
   },
   "redisdb": {
     "address": "127.0.0.1",
-    "port": "6379"
+    "port": "6379",
+    "address2": "redis-12835.c265.us-east-1-2.ec2.cloud.redislabs.com",
+    "port2": "12835"
   },
   "shu_timeout": 5
 }
