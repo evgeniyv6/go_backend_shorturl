@@ -1,0 +1,208 @@
+openapi: "3.0.0"
+info:
+  description: "This is URL shortener (golang bitly analog)"
+  version: "1.0.0"
+  title: "URL Shortener"
+  contact:
+    email: "admin@inbox.ru"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+components:
+  parameters:
+    Hash:
+      description: A short link made of the domain and hash
+      example: http://example.com/Wchd8b6c
+      in: path
+      name: hash
+      required: true
+      schema:
+        type: string
+    GoShortLinkStat:
+      description: The query parameter used to get stat for a short link
+      example: http://example.com/Wchd8b6c/info
+      in: path
+      name: hash
+      required: true
+      schema:
+        type: string
+    RedirectGoShortLink:
+      description: Redirect to the original link
+      example: http://mylink.com/mypath
+      in: path
+      name: redirect_link
+      required: true
+      schema:
+        type: string
+  schemas:
+    GoShortLinkUpdate:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: string
+    Hash:
+      type: object
+      properties:
+        links:
+          items: {$ref: '#/components/schemas/GoShortLinkBody'}
+          type: array
+    ShortLinkOverrides:
+      type: object
+      properties:
+        created:
+          type: string
+        id:
+          type: string
+        link:
+          description: 'The full URL to the Override which is thelink to use. Ex: https://foo.com/bar'
+          type: string
+    HasReferences:
+      properties:
+        references:
+          additionalProperties:
+            type: string
+          type: object
+      type: object
+    FullURL:
+      type: object
+      properties:
+        url:
+          type: string
+      required: [url]
+    GoShortLinkBody:
+      allOf:
+        - {$ref: '#/components/schemas/GoShortLinkUpdate'}
+      type: object
+    Stat:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          items:
+            $ref: '#/components/schemas/LinkClicks'
+    LinkClicks:
+      type: object
+      properties:
+        id:
+          type: integer
+        stat:
+          type: integer
+        link:
+          type: string
+    BadRequest:
+      allOf:
+        - {$ref: '#/components/schemas/Error'}
+      description: BAD_REQUEST
+    Error:
+      type: object
+      properties:
+        description:
+          type: string
+        errors:
+          items:
+            $ref: '#/components/schemas/FieldError'
+          type: array
+        message:
+          type: string
+    FieldError:
+      type: object
+      properties:
+        error_code:
+          type: string
+        message:
+          type: string
+    NotFound:
+      allOf:
+        - {$ref: '#/components/schemas/Error'}
+      description: NOT_FOUND
+    InternalError:
+      allOf:
+        - {$ref: '#/components/schemas/Error'}
+      description: INTERNAL_ERROR
+paths:
+  /cut:
+    post:
+      description: Converts a long url to a short link
+      operationId: createFullGoShortLink
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FullURL'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoShortLinkBody'
+          description: SUCCESS
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+          description: BAD_REQUEST
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
+          description: NOT_FOUND
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalError'
+          description: INTERNAL_ERROR
+      summary: Create a short link
+  /{hash}:
+    get:
+      description: Returns information for the specified link.
+      operationId: getGoShortLink
+      parameters:
+        - {$ref: '#/components/parameters/Hash'}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoShortLinkBody'
+          description: SUCCESS
+        '404':
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NotFound'}
+          description: NOT_FOUND
+        '500':
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/InternalError'}
+          description: INTERNAL_ERROR
+      summary: Retrieve a short link
+  /{hash}/info:
+    get:
+      description: Returns the stat for the specified link
+      operationId: getStatsForGoShortLink
+      parameters:
+        - {$ref: '#/components/parameters/GoShortLinkStat'}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Stat'}
+          description: SUCCESS
+        '404':
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/NotFound'}
+          description: NOT_FOUND
+        '500':
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/InternalError'}
+          description: INTERNAL_ERROR
+      summary: Get statistics about link
