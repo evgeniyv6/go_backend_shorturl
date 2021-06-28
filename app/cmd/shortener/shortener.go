@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"net"
-	"net/http"
+
+	//"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -51,19 +52,24 @@ func main() {
 
 	router := handler.NewGinRouter(config.Server.Protocol, srvAddress, act)
 
-	srv := &http.Server{
-		Addr:    srvAddress,
-		Handler: router,
+	err = router.Run()
+	if err != nil {
+		zap.S().Panicw("Start server failed.", "err", err)
 	}
-
-	zap.S().Infof("Starting server. Listening address: %s on port: %s", config.Server.Address, config.Server.Port)
-	go func() {
-		err := srv.ListenAndServe()
-		zap.S().Infof("Server started. Listening address: %s on port: %s", config.Server.Address, config.Server.Port)
-		if err != nil && err != http.ErrServerClosed {
-			zap.S().Panicw("Start server error.", "err", err)
-		}
-	}()
+	zap.S().Info("srv started")
+	//srv := &http.Server{
+	//	Addr:    srvAddress,
+	//	Handler: router,
+	//}
+	//
+	//zap.S().Infof("Starting server. Listening address: %s on port: %s", config.Server.Address, config.Server.Port)
+	//go func() {
+	//	err := srv.ListenAndServe()
+	//	zap.S().Infof("Server started. Listening address: %s on port: %s", config.Server.Address, config.Server.Port)
+	//	if err != nil && err != http.ErrServerClosed {
+	//		zap.S().Panicw("Start server error.", "err", err)
+	//	}
+	//}()
 
 	// Listen for the interrupt signal
 	<-ctx.Done()
@@ -74,9 +80,9 @@ func main() {
 	// The context is used to tell the server it has <timeout from config> seconds to finish
 	ctx, cancel := context.WithTimeout(context.Background(), config.Timeout*time.Second)
 	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		zap.S().Errorw("Server forced to shutdown.", "err", err)
-	}
+	//if err := srv.Shutdown(ctx); err != nil {
+	//	zap.S().Errorw("Server forced to shutdown.", "err", err)
+	//}
 
 	zap.S().Info("Server exiting.")
 }

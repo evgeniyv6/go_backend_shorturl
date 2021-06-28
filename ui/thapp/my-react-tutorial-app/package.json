@@ -14,7 +14,7 @@
     "semantic-ui-react": "^2.0.3",
     "web-vitals": "^1.1.2"
   },
-  "proxy": "http://localhost:6089",
+  "proxy": "http://localhost:8080",
   "scripts": {
     "start": "PORT=8080 react-scripts start",
     "build": "react-scripts build",
