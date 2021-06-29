@@ -1,25 +1,25 @@
 import React, {Component} from 'react';
 
-class Friends extends Component {
+class Shorter extends React.Component {
   render() {
     return (
         <table className="table table-striped">
-          <thead>
-          <tr>
-            <th>ID</th>
-            <th>Original URL</th>
-            <th>Call statistics</th>
-          </tr>
-          </thead>
-          <tbody>
-          {this.props.friends && this.props.friends.length>0 && this.props.friends.map(friend => {
-            return <tr key={friend.id}>
-              <td>{friend.id}</td>
-              <td>{friend.link}</td>
-              <td>{friend.stat}</td>
-            </tr>
-          })}
-          </tbody>
+          {/*<thead>*/}
+          {/*<tr>*/}
+          {/*    <th>ID</th>*/}
+          {/*    <th>LINK</th>*/}
+          {/*    <th>STAT</th>*/}
+          {/*</tr>*/}
+          {/*</thead>*/}
+          <div><strong><pre>{JSON.stringify(this.props.shorter_result_link, null, 2) }</pre></strong></div>
+          {/*{this.props.shorter_result_link && Array.from(this.props.shorter_result_link).map( (arr) => {*/}
+          {/*     <tr key={arr.data}>*/}
+          {/*        <td>{arr.data.id}</td>*/}
+          {/*        <td>{arr.data.link}</td>*/}
+          {/*        <td>{arr.data.stat}</td>*/}
+          {/*    </tr>*/}
+          {/*})}*/}
+
         </table>
     );
   }
@@ -30,7 +30,8 @@ class App extends Component {
     super(props);
     this.state = {
       url: '',
-      friends: [],
+      res:'',
+      shorter_result_link: [],
     };
 
     this.create = this.create.bind(this);
@@ -39,94 +40,15 @@ class App extends Component {
   }
 
   componentDidMount() {
-    fetch("kvlzpsVUPH/info", {
-      "method": "GET",
-      "headers": {
-        "content-type": "application/json",
-        "accept": "application/json"
-      }
-    })
-        .then(response => response.json())
-        .then(response => {
-          this.setState({
-            friends: response
-          })
-        })
-        .then(response => {
-          console.log(`resp_one = ${response}`)})
-        .catch(err => { console.log(err);
-        });
+
   }
-
-  info(e) {
-    e.preventDefault();
-
-    console.log(`url-->> ${this.state.url}`)
-
-    fetch(`${this.state.url}/info`, {
-      "method": "GET",
-      "headers": {
-        "content-type": "application/json",
-        "accept": "application/json"
-      }
-    })
-        .then(response => response.json())
-        .then(response => {
-          console.log(response);
-        })
-        .catch(err => {
-          console.log(err);
-        });
-  }
-
-
-  handleChange(event) {
-    this.setState(event)
-  }
-
-  handleSubmit(event) {
-    event.preventDefault();
-    fetch("http://0.0.0.0:8079/kvlzpsVUPH/info", {
-      "method": "GET",
-      "headers": {
-        "content-type": "application/json",
-        "accept": "application/json"
-      }
-    })
-        .then(response => response.json())
-        .then(response => {
-          console.log(`response123 - ${response}`)
-        })
-        .then(url => this.setState(url));
-  }
-
-// async postData(url = '', data = {}) {
-//   // Default options are marked with *
-//   const response = await fetch(url, {
-//     method: 'GET', // *GET, POST, PUT, DELETE, etc.
-//     mode: 'no-cors', // no-cors, *cors, same-origin
-//     cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-//     credentials: 'same-origin', // include, *same-origin, omit
-//     headers: {
-//       'Content-Type': 'application/json'
-//       // 'Content-Type': 'application/x-www-form-urlencoded',
-//     },
-//     redirect: 'follow', // manual, *follow, error
-//     referrerPolicy: 'no-referrer' // no-referrer, *client
-//     //body: JSON.stringify(data) // body data type must match "Content-Type" header
-//   });
-//   return await response; // parses JSON response into native JavaScript objects
-// }
 
   create(e) {
-    // add entity - POST
     e.preventDefault();
-
-
     console.log(JSON.stringify({
-      url: this.state.link_url
+      url: this.state.url
     }))
-    fetch("cut", {
+    fetch("http://0.0.0.0:8079/cut", {
       "method": "POST",
       "headers": {
         "content-type": "application/json",
@@ -136,8 +58,12 @@ class App extends Component {
         url: this.state.url
       })
     })
-
         .then(response => response.json())
+        .then(response => {
+          this.setState({
+            res: response
+          })
+        })
         .then(response => {
           console.log(response)
         })
@@ -147,6 +73,33 @@ class App extends Component {
 
   }
 
+  info(e) {
+    e.preventDefault();
+    fetch(this.state.url, {
+      "method": "GET",
+      "headers": {
+        "content-type": "application/json",
+        "accept": "application/json"
+      }
+    })
+        .then(response => response.json())
+        .then(response => {
+          this.setState({
+            shorter_result_link: response
+          })
+        })
+        .then(response => {
+          console.log(`>>  ${JSON.stringify(this.state.shorter_result_link)}`)
+        })
+        .catch(err => {
+          console.log(err);
+        });
+  }
+
+
+  handleChange(changeObject) {
+    this.setState(changeObject)
+  }
 
   render() {
     return (
@@ -154,7 +107,6 @@ class App extends Component {
           <div className="row justify-content-center">
             <div className="col-md-8">
               <h1 className="display-4 text-center">Make a short link</h1>
-
               <form className="d-flex flex-column">
                 <label htmlFor="name">
                   URL:
@@ -171,18 +123,20 @@ class App extends Component {
                 <button className="btn btn-primary" type='button' onClick={(e) => this.create(e)}>
                   Shorten
                 </button>
-                <button className="btn btn-info" type='button' onClick={(e) => {
-                  this.info(e);
-
-                }}>
+                <br></br>
+                <strong>{JSON.stringify(this.state.res)}</strong>
+                <br></br>
+                <button className="btn btn-info" type='button' onClick={(e) => {this.info(e)}}>
                   Get Stat
                 </button>
+                {/*<p>{JSON.stringify(this.state.shorter_result_link)}</p>*/}
+                <br></br>
+                <Shorter shorter_result_link={this.state.shorter_result_link} />
+                <br></br>
               </form>
-              <Friends friends={this.state.friends} />
             </div>
           </div>
         </div>
-
     );
   }
 }
