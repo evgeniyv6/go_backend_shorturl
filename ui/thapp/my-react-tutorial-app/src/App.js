@@ -48,7 +48,7 @@ class App extends Component {
     console.log(JSON.stringify({
       url: this.state.url
     }))
-    fetch("http://0.0.0.0:8079/cut", {
+    fetch("cut", {
       "method": "POST",
       "headers": {
         "content-type": "application/json",
@@ -75,7 +75,7 @@ class App extends Component {
 
   info(e) {
     e.preventDefault();
-    fetch(this.state.url, {
+    fetch(`${this.state.url}/info`, {
       "method": "GET",
       "headers": {
         "content-type": "application/json",
