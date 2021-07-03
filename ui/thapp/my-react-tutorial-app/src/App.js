@@ -4,22 +4,23 @@ class Shorter extends React.Component {
   render() {
     return (
         <table className="table table-striped">
-          {/*<thead>*/}
-          {/*<tr>*/}
-          {/*    <th>ID</th>*/}
-          {/*    <th>LINK</th>*/}
-          {/*    <th>STAT</th>*/}
-          {/*</tr>*/}
-          {/*</thead>*/}
-          <div><strong><pre>{JSON.stringify(this.props.shorter_result_link, null, 2) }</pre></strong></div>
-          {/*{this.props.shorter_result_link && Array.from(this.props.shorter_result_link).map( (arr) => {*/}
-          {/*     <tr key={arr.data}>*/}
-          {/*        <td>{arr.data.id}</td>*/}
-          {/*        <td>{arr.data.link}</td>*/}
-          {/*        <td>{arr.data.stat}</td>*/}
-          {/*    </tr>*/}
-          {/*})}*/}
-
+          <thead>
+          <tr>
+              <th>ID</th>
+              <th>LINK</th>
+              <th>STAT</th>
+          </tr>
+          </thead>
+          {/*<div><strong><pre>{JSON.stringify(this.props.shorter_result_link, null, 2) }</pre></strong></div>*/}
+          <tbody>
+          {this.props.shorter_result_link &&
+          <tr key={this.props.shorter_result_link.id}>
+            <td>{this.props.shorter_result_link.id}</td>
+            <td>{this.props.shorter_result_link.link}</td>
+            <td>{this.props.shorter_result_link.stat}</td>
+          </tr>
+          }
+          </tbody>
         </table>
     );
   }
@@ -124,14 +125,14 @@ class App extends Component {
                   Shorten
                 </button>
                 <br></br>
-                <strong>{JSON.stringify(this.state.res)}</strong>
+                <strong>{JSON.stringify(this.state.res.data)}</strong>
                 <br></br>
                 <button className="btn btn-info" type='button' onClick={(e) => {this.info(e)}}>
                   Get Stat
                 </button>
                 {/*<p>{JSON.stringify(this.state.shorter_result_link)}</p>*/}
                 <br></br>
-                <Shorter shorter_result_link={this.state.shorter_result_link} />
+                <Shorter shorter_result_link={this.state.shorter_result_link.data} />
                 <br></br>
               </form>
             </div>
