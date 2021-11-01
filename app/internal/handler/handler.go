@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -23,17 +22,15 @@ type (
 		netProtocol string
 		host        string
 		db          redisdb.DBAction
+		logger      *zap.SugaredLogger
 	}
 )
 
-func NewGinRouter(netProtocol, address string, db redisdb.DBAction) *gin.Engine {
-	gin.SetMode(gin.ReleaseMode) // for production
+func NewGinRouter(netProtocol, address string, db redisdb.DBAction, logger *zap.SugaredLogger) *gin.Engine {
+	// gin.SetMode(gin.ReleaseMode) // for production
 	r := gin.New()
-	// r.Use(cors.Default())
-	//r.Use(static.Serve("/", static.LocalFile("./web", true)))
 	r.Use(static.Serve("/", static.LocalFile("./web", true)))
-	//api := r.Group("/api")
-	h := handler{netProtocol, address, db}
+	h := handler{netProtocol, address, db, logger}
 	r.POST("/cut", respHandler(h.cut))
 	r.GET("/:hash/info", respHandler(h.expand))
 	r.GET("/:hash", h.redirect)
@@ -46,7 +43,6 @@ func respHandler(h func(ctx *gin.Context) (interface{}, int, error)) gin.Handler
 		if err != nil {
 			res = err.Error()
 		}
-		zap.S().Info(res)
 		context.JSON(code, resp{Data: res, Success: err == nil})
 	}
 }
@@ -57,9 +53,9 @@ func (h *handler) cut(ctx *gin.Context) (interface{}, int, error) {
 	}
 	err := ctx.ShouldBindJSON(&body)
 	if err != nil {
-		zap.S().Errorw("Couldnot get body from request.", "err", err)
+		h.logger.Errorw("Couldnot get body from request.", "err", err)
 	}
-	zap.S().Infow("Link for processing.", "link", body.URL)
+	h.logger.Infow("Link for processing.", "link", body.URL)
 
 	uri, err := url.ParseRequestURI(body.URL)
 	if err != nil {
@@ -77,17 +73,16 @@ func (h *handler) cut(ctx *gin.Context) (interface{}, int, error) {
 		Path:   hashString,
 	}
 
-	zap.S().Infof("Short link: %v", newUrl.String())
+	h.logger.Infof("Short link: %v", newUrl.String())
 
 	return newUrl.String(), http.StatusCreated, nil
 }
 
 func (h *handler) expand(ctx *gin.Context) (interface{}, int, error) {
 	hash := ctx.Param("hash")
-	zap.S().Infof("Hash info: %s", hash)
+	h.logger.Infof("Hash info: %s", hash)
 
 	res, err := h.db.GetInfo(hash)
-	log.Printf("----...>>> %v", err)
 	if err != nil {
 		return nil, http.StatusNotFound, fmt.Errorf("URL not found")
 	}
@@ -100,7 +95,7 @@ func (h *handler) redirect(ctx *gin.Context) {
 
 	link, err := h.db.GetLink(hash)
 
-	zap.S().Infof("Redirect to %s", link)
+	h.logger.Infof("Redirect to %s", link)
 
 	if err != nil {
 		ctx.Status(http.StatusNotFound)

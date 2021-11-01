@@ -3,8 +3,7 @@ module github.com/evgeniyv6/go_backend_shorturl/app
 go 1.16
 
 require (
-	github.com/gin-contrib/cors v1.3.1 // indirect
-	github.com/gin-contrib/static v0.0.1 // indirect
+	github.com/gin-contrib/static v0.0.1
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-playground/validator/v10 v10.6.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -16,6 +15,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/spf13/afero v1.6.0
 	github.com/ugorji/go v1.2.6 // indirect
+	go.elastic.co/ecszap v1.0.1-0.20210922110956-698ab8c60e81
 	go.uber.org/zap v1.17.0
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a // indirect
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect

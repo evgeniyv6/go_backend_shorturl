@@ -1,5 +1,5 @@
 build:
-	cd ./app/cmd/shortener && go build -o shortener shortener.go
+	cd ./app/cmd/shortener && go build -mod=vendor -o shortener shortener.go
 
 fmt:
 	gofmt -w -s .

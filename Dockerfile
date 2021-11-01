@@ -15,7 +15,6 @@ COPY --from=builder /shortener /shortener
 COPY --from=builder /src/app/cmd/shortener/config_docker.json /config.json
 COPY --from=builder /src/ui/thapp/my-react-tutorial-app ./
 RUN npm install
-RUN npm install -g serve
 RUN npm run build
 
 FROM alpine:latest

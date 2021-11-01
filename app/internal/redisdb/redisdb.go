@@ -3,7 +3,6 @@ package redisdb
 import (
 	"math/rand"
 	"net"
-	"os"
 	"strconv"
 	"time"
 
@@ -14,8 +13,11 @@ import (
 )
 
 type (
-	redisConn struct{ pool *redis.Pool }
-	DBRecord  struct {
+	redisConn struct {
+		logger *zap.SugaredLogger
+		pool   *redis.Pool
+	}
+	DBRecord struct {
 		ID   uint64 `json:"id"`
 		Link string `json:"link"`
 		Stat int    `json:"stat"`
@@ -39,16 +41,16 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func NewPool(addr, port string) (DBAction, error) {
+func NewPool(addr, port string, logger *zap.SugaredLogger) (DBAction, error) {
 	p := &redis.Pool{
 		MaxIdle:     3,
 		IdleTimeout: 240 * time.Second,
 		// Dial or DialContext must be set. When both are set, DialContext takes precedence over Dial.
 		Dial: func() (redis.Conn, error) {
-			return redis.Dial("tcp", net.JoinHostPort(addr, port), redis.DialPassword(os.Getenv("REDIS_PASSWORD")))
+			return redis.Dial("tcp", net.JoinHostPort(addr, port))
 		},
 	}
-	return &redisConn{p}, nil
+	return &redisConn{logger, p}, nil
 }
 
 func (r *redisConn) used(num uint64) bool {
@@ -56,7 +58,7 @@ func (r *redisConn) used(num uint64) bool {
 	defer func() {
 		err := conn.Close()
 		if err != nil {
-			zap.S().Errorw("Couldnot close redis connection.", "err", err)
+			r.logger.Errorw("Couldnot close redis connection.", "err", err)
 		}
 	}()
 
@@ -72,7 +74,7 @@ func (r *redisConn) Save(link string) (string, error) {
 	defer func() {
 		err := conn.Close()
 		if err != nil {
-			zap.S().Errorw("Couldnot close redis connection.", "err", err)
+			r.logger.Errorw("Couldnot close redis connection.", "err", err)
 		}
 	}()
 
@@ -98,7 +100,7 @@ func (r *redisConn) GetLink(hash string) (string, error) {
 	defer func() {
 		err := conn.Close()
 		if err != nil {
-			zap.S().Errorw("Couldnot close redis connection.", "err", err)
+			r.logger.Errorw("Couldnot close redis connection.", "err", err)
 		}
 	}()
 
@@ -127,16 +129,11 @@ func (r *redisConn) GetInfo(hash string) (*DBRecord, error) {
 	defer func() {
 		err := conn.Close()
 		if err != nil {
-			zap.S().Errorw("Couldnot close redis connection.", "err", err)
+			r.logger.Errorw("Couldnot close redis connection.", "err", err)
 		}
 	}()
 
-	clearedRandNum, err := hasher.GenClear(hash)
-	if err != nil {
-		return nil, err
-	}
-
-	val, err := redis.Values(conn.Do("HGETALL", "go:shorted:"+strconv.FormatUint(clearedRandNum, 10)))
+	val, err := redis.Values(conn.Do("HGETALL", "go:shorted:2481786623234138023"))
 	if err != nil {
 		return nil, err
 	} else if len(val) == 0 {
