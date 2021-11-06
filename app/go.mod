@@ -13,7 +13,10 @@ require (
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/opentracing/opentracing-go v1.2.0
 	github.com/spf13/afero v1.6.0
+	github.com/uber/jaeger-client-go v2.29.1+incompatible
+	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/ugorji/go v1.2.6 // indirect
 	go.elastic.co/ecszap v1.0.1-0.20210922110956-698ab8c60e81
 	go.uber.org/zap v1.17.0

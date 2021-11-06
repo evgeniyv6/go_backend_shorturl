@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"net"
-	"os"
 
-	"go.elastic.co/ecszap"
+	"github.com/evgeniyv6/go_backend_shorturl/app/internal/tracing"
+
+	"github.com/evgeniyv6/go_backend_shorturl/app/internal/logger"
 
 	"os/signal"
 	"syscall"
@@ -16,19 +17,15 @@ import (
 	"github.com/evgeniyv6/go_backend_shorturl/app/internal/redisdb"
 
 	_ "go.elastic.co/ecszap"
-	"go.uber.org/zap"
 )
 
 var FSO configuration.OsFileSystem
 
 func main() {
-	encoderConfig := ecszap.NewDefaultEncoderConfig()
-	core := ecszap.NewCore(encoderConfig, os.Stdout, zap.DebugLevel)
-	logger := zap.New(core, zap.AddCaller())
-	logger = logger.With(zap.String("app", "link cutter"))
-	sugar := logger.Sugar()
-
-	defer func() { _ = logger.Sync() }()
+	sugar := logger.NewZapWrapper()
+	j := tracing.NewJaegerTracer("", sugar)
+	tracer, closer := j.Init()
+	defer closer.Close()
 
 	// Create context that listens for the interrupt signal from the OS.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -39,7 +36,7 @@ func main() {
 	}
 
 	srvAddress := net.JoinHostPort(config.Server.Address, config.Server.Port)
-	act, err := redisdb.NewPool(config.RedisDB.Address, config.RedisDB.Port, sugar)
+	act, err := redisdb.NewPool(config.RedisDB.Address, config.RedisDB.Port, sugar, tracer)
 	if err != nil {
 		sugar.Panicw("Couldnot get redis connection error.", "err", err)
 	}
@@ -50,7 +47,7 @@ func main() {
 		}
 	}()
 
-	router := handler.NewGinRouter(config.Server.Protocol, srvAddress, act, sugar)
+	router := handler.NewGinRouter(config.Server.Protocol, srvAddress, act, sugar, tracer)
 
 	err = router.Run()
 	if err != nil {

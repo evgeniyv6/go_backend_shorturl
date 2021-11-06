@@ -1,21 +1,28 @@
 package redisdb
 
 import (
+	"context"
 	"math/rand"
 	"net"
 	"strconv"
 	"time"
 
+	"github.com/opentracing/opentracing-go/log"
+
+	"github.com/opentracing/opentracing-go"
+
+	"github.com/evgeniyv6/go_backend_shorturl/app/internal/logger"
+
 	"github.com/evgeniyv6/go_backend_shorturl/app/internal/hasher"
 
 	"github.com/gomodule/redigo/redis"
-	"go.uber.org/zap"
 )
 
 type (
 	redisConn struct {
-		logger *zap.SugaredLogger
+		logger logger.ZapWrapper
 		pool   *redis.Pool
+		tracer opentracing.Tracer
 	}
 	DBRecord struct {
 		ID   uint64 `json:"id"`
@@ -23,10 +30,10 @@ type (
 		Stat int    `json:"stat"`
 	}
 	DBAction interface {
-		Save(string) (string, error)
+		Save(context.Context, string) (string, error)
 		Close() error
-		GetLink(string) (string, error)
-		GetInfo(string) (*DBRecord, error)
+		GetLink(context.Context, string) (string, error)
+		GetInfo(context.Context, string) (*DBRecord, error)
 	}
 	errorString struct {
 		s string
@@ -41,7 +48,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func NewPool(addr, port string, logger *zap.SugaredLogger) (DBAction, error) {
+func NewPool(addr, port string, logger logger.ZapWrapper, tracer opentracing.Tracer) (DBAction, error) {
 	p := &redis.Pool{
 		MaxIdle:     3,
 		IdleTimeout: 240 * time.Second,
@@ -50,15 +57,23 @@ func NewPool(addr, port string, logger *zap.SugaredLogger) (DBAction, error) {
 			return redis.Dial("tcp", net.JoinHostPort(addr, port))
 		},
 	}
-	return &redisConn{logger, p}, nil
+	return &redisConn{logger, p, tracer}, nil
 }
 
-func (r *redisConn) used(num uint64) bool {
+func (r *redisConn) used(ctx context.Context, num uint64) bool {
+	span, _ := opentracing.StartSpanFromContextWithTracer(ctx, r.tracer, "Check redis EXISTS")
+	defer span.Finish()
+
+	span.LogFields(
+		log.Uint64("redis id", num),
+	)
+
 	conn := r.pool.Get()
 	defer func() {
 		err := conn.Close()
 		if err != nil {
 			r.logger.Errorw("Couldnot close redis connection.", "err", err)
+			span.LogFields(log.Error(err))
 		}
 	}()
 
@@ -69,7 +84,7 @@ func (r *redisConn) used(num uint64) bool {
 	return exists
 }
 
-func (r *redisConn) Save(link string) (string, error) {
+func (r *redisConn) Save(ctx context.Context, link string) (string, error) {
 	conn := r.pool.Get()
 	defer func() {
 		err := conn.Close()
@@ -79,7 +94,7 @@ func (r *redisConn) Save(link string) (string, error) {
 	}()
 
 	var randNum uint64
-	for pres := true; pres; pres = r.used(randNum) {
+	for pres := true; pres; pres = r.used(ctx, randNum) {
 		randNum = rand.Uint64()
 	}
 
@@ -95,12 +110,18 @@ func (r *redisConn) Close() error {
 	return r.pool.Close()
 }
 
-func (r *redisConn) GetLink(hash string) (string, error) {
+func (r *redisConn) GetLink(ctx context.Context, hash string) (string, error) {
+	span, _ := opentracing.StartSpanFromContextWithTracer(ctx, r.tracer, "redis get info")
+	defer span.Finish()
+
 	conn := r.pool.Get()
 	defer func() {
 		err := conn.Close()
 		if err != nil {
 			r.logger.Errorw("Couldnot close redis connection.", "err", err)
+			span.LogFields(
+				log.Error(err),
+			)
 		}
 	}()
 
@@ -108,6 +129,10 @@ func (r *redisConn) GetLink(hash string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	span.LogFields(
+		log.Uint64("get link hash", clearedRandNum),
+	)
 
 	dbRecLink, err := redis.String(conn.Do("HGET", "go:shorted:"+strconv.FormatUint(clearedRandNum, 10), "Link"))
 	if err != nil {
@@ -123,17 +148,32 @@ func (r *redisConn) GetLink(hash string) (string, error) {
 	return dbRecLink, nil
 }
 
-func (r *redisConn) GetInfo(hash string) (*DBRecord, error) {
+func (r *redisConn) GetInfo(ctx context.Context, hash string) (*DBRecord, error) {
+	span, _ := opentracing.StartSpanFromContextWithTracer(ctx, r.tracer, "redis get info")
+	defer span.Finish()
+
 	var shortLink DBRecord
 	conn := r.pool.Get()
 	defer func() {
 		err := conn.Close()
 		if err != nil {
 			r.logger.Errorw("Couldnot close redis connection.", "err", err)
+			span.LogFields(
+				log.Error(err),
+			)
 		}
 	}()
 
-	val, err := redis.Values(conn.Do("HGETALL", "go:shorted:2481786623234138023"))
+	clearedRandNum, err := hasher.GenClear(hash)
+	if err != nil {
+		return nil, err
+	}
+
+	span.LogFields(
+		log.Uint64("get info hash", clearedRandNum),
+	)
+
+	val, err := redis.Values(conn.Do("HGETALL", "go:shorted:"+strconv.FormatUint(clearedRandNum, 10)))
 	if err != nil {
 		return nil, err
 	} else if len(val) == 0 {
