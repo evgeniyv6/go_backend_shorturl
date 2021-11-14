@@ -48,7 +48,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func NewPool(addr, port string, logger logger.ZapWrapper, tracer opentracing.Tracer) (DBAction, error) {
+func NewPool(addr, port string, logger logger.ZapWrapper, tracer opentracing.Tracer) (redisConn, error) {
 	p := &redis.Pool{
 		MaxIdle:     3,
 		IdleTimeout: 240 * time.Second,
@@ -57,7 +57,7 @@ func NewPool(addr, port string, logger logger.ZapWrapper, tracer opentracing.Tra
 			return redis.Dial("tcp", net.JoinHostPort(addr, port))
 		},
 	}
-	return &redisConn{logger, p, tracer}, nil
+	return redisConn{logger, p, tracer}, nil
 }
 
 func (r *redisConn) used(ctx context.Context, num uint64) bool {
