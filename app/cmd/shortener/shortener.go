@@ -23,7 +23,7 @@ var FSO configuration.OsFileSystem
 
 func main() {
 	sugar := logger.NewZapWrapper()
-	j := tracing.NewJaegerTracer("", sugar)
+	j := tracing.NewJaegerTracer("link cutter example", sugar)
 	tracer, closer := j.Init()
 	defer closer.Close()
 
@@ -36,9 +36,13 @@ func main() {
 	}
 
 	srvAddress := net.JoinHostPort(config.Server.Address, config.Server.Port)
-	act, err := redisdb.NewPool(config.RedisDB.Address, config.RedisDB.Port, sugar, tracer)
+	redisConn, err := redisdb.NewPool(config.RedisDB.Address, config.RedisDB.Port, sugar, tracer)
 	if err != nil {
-		sugar.Panicw("Couldnot get redis connection error.", "err", err)
+		sugar.Panicw("Couldnot get redis 0 connection error.", "err", err)
+	}
+	act, err := redisdb.NewCachedRedis(redisConn)
+	if err != nil {
+		sugar.Panicw("Couldnot get redis 1 connection error.", "err", err)
 	}
 	defer func() {
 		err := act.Close()
